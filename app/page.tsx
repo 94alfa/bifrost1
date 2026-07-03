@@ -30,7 +30,9 @@ import {
   Send,
   AlertCircle,
   X,
-  Compass
+  Compass,
+  Check,
+  Trash2
 } from 'lucide-react';
 
 const mythologicalUsers = [
@@ -49,6 +51,8 @@ export default function BifrostHome() {
   // Auth simulation
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [currentUser, setCurrentUser] = useState('odin_allfather');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [writeSuccessMessage, setWriteSuccessMessage] = useState('');
 
   // Randomize on client mount to avoid hydration mismatch and SSR randomness
   useEffect(() => {
@@ -64,9 +68,9 @@ export default function BifrostHome() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [registerUsername, setRegisterUsername] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
   const [registerError, setRegisterError] = useState('');
 
   // Write Article Inputs
@@ -103,38 +107,68 @@ export default function BifrostHome() {
   const [showSnippetForm, setShowSnippetForm] = useState(false);
 
   // Submit Login Simulation
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginUsername.trim()) {
       setLoginError('Por favor, informe seu nome de usuário.');
       return;
     }
-    // Clean username format (separated by _ or - as per user guidelines)
-    const formattedUsername = loginUsername.trim().toLowerCase().replace(/\s+/g, '_');
-    setIsLoggedIn(true);
-    setCurrentUser(formattedUsername);
-    setCurrentScreen('home');
-    // Clear inputs
-    setLoginUsername('');
-    setLoginPassword('');
-    setLoginError('');
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao fazer login.');
+      }
+      
+      setIsLoggedIn(true);
+      setCurrentUser(data.username);
+      setIsAdmin(!!data.isAdmin);
+      setCurrentScreen('home');
+      
+      // Clear inputs
+      setLoginUsername('');
+      setLoginPassword('');
+      setLoginError('');
+    } catch (err: any) {
+      setLoginError(err.message || 'Falha ao fazer login.');
+    }
   };
 
   // Submit Register Simulation
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registerUsername.trim()) {
-      setRegisterError('Por favor, escolha um nome de usuário.');
+    if (!registerEmail.trim()) {
+      setRegisterError('Por favor, escolha um e-mail.');
       return;
     }
-    const formattedUsername = registerUsername.trim().toLowerCase().replace(/\s+/g, '-');
+    if (registerPassword !== registerConfirmPassword) {
+      setRegisterError('As senhas não coincidem.');
+      return;
+    }
+    if (registerPassword.length < 6) {
+      setRegisterError('A senha deve conter pelo menos 6 caracteres.');
+      return;
+    }
+
+    // Generate username automatically: short and clean
+    const emailPrefix = registerEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 6);
+    const randomNum = Math.floor(10 + Math.random() * 90);
+    const autoUsername = `${emailPrefix || 'user'}_${randomNum}`;
+
     setIsLoggedIn(true);
-    setCurrentUser(formattedUsername);
+    setCurrentUser(autoUsername);
+    setIsAdmin(false);
     setCurrentScreen('home');
+    
     // Clear inputs
-    setRegisterUsername('');
     setRegisterEmail('');
     setRegisterPassword('');
+    setRegisterConfirmPassword('');
     setRegisterError('');
   };
 
@@ -196,7 +230,15 @@ export default function BifrostHome() {
       setNewExcerpt('');
       setNewContent('');
       setNewTagsInput('');
-      loadData();
+      loadData(isAdmin);
+      
+      if (isAdmin) {
+        setWriteSuccessMessage('Artigo publicado com sucesso!');
+      } else {
+        setWriteSuccessMessage('Artigo enviado com sucesso! Aguardando revisão do Guardião Heimdall para ser publicado.');
+      }
+      setTimeout(() => setWriteSuccessMessage(''), 10000);
+      
       setCurrentScreen('home');
     } catch (err: any) {
       setWriteError(err.message || 'Falha ao salvar seu artigo.');
@@ -206,12 +248,14 @@ export default function BifrostHome() {
   };
 
   // Fetch all initial data
-  const loadData = async () => {
+  const loadData = async (adminOverride?: boolean) => {
     setLoading(true);
     setError(null);
     try {
+      const checkAdmin = adminOverride !== undefined ? adminOverride : isAdmin;
+      const articlesUrl = checkAdmin ? '/api/articles?admin=true' : '/api/articles';
       const [articlesRes, snippetsRes] = await Promise.all([
-        fetch('/api/articles'),
+        fetch(articlesUrl),
         fetch('/api/snippets')
       ]);
 
@@ -233,11 +277,9 @@ export default function BifrostHome() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadData();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   // Handle Incremental Likes for Articles
   const handleLikeArticle = async (id: string) => {
@@ -336,6 +378,7 @@ export default function BifrostHome() {
                 <button
                   onClick={() => {
                     setIsLoggedIn(false);
+                    setIsAdmin(false);
                     setCurrentScreen('home');
                   }}
                   className="text-[10px] md:text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 px-2 py-1 rounded-none transition-colors cursor-pointer"
@@ -412,6 +455,24 @@ export default function BifrostHome() {
         
         {currentScreen === 'home' && (
           <>
+            {writeSuccessMessage && (
+              <div className="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 text-xs md:text-sm font-bold flex items-center justify-between rounded-none animate-fade-in shadow-sm">
+                <span>{writeSuccessMessage}</span>
+                <button onClick={() => setWriteSuccessMessage('')} className="text-emerald-500 hover:text-emerald-700 cursor-pointer">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
+            {isAdmin && (
+              <div className="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 text-[#0b2046] text-xs md:text-sm font-bold rounded-none animate-fade-in flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
+                <div>
+                  <span className="uppercase tracking-wider mr-2 text-[10px] bg-amber-500 text-white px-1.5 py-0.5 font-mono">Guardião Ativo</span>
+                  <span>Você está logado como <strong>Heimdall</strong>. Agora você pode revisar, aprovar ou eliminar publicações pendentes da Bifrost.</span>
+                </div>
+              </div>
+            )}
+
             {/* Navigation Tabs Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5 mb-6 gap-4">
               
@@ -429,7 +490,7 @@ export default function BifrostHome() {
                   placeholder="Buscar artigos, tags..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-100 rounded-none pl-10 pr-4 py-2.5 text-xs md:text-sm text-[#0b2046] focus:ring-1 focus:ring-[#ff5a00]/20 focus:outline-none transition-all placeholder-slate-400 shadow-sm"
+                  className="w-full bg-slate-100 border border-slate-300 rounded-none pl-10 pr-4 py-2.5 text-xs md:text-sm text-[#0b2046] focus:bg-white focus:border-2 focus:border-[#ff5a00] focus:ring-0 focus:outline-none transition-all placeholder-slate-400 shadow-sm"
                 />
               </div>
 
@@ -465,7 +526,7 @@ export default function BifrostHome() {
               <div className="p-5 max-w-lg mx-auto rounded-none bg-red-50 border border-red-200 text-center space-y-3 shadow-sm">
                 <p className="text-sm text-red-600 font-medium">{error}</p>
                 <button 
-                  onClick={loadData}
+                  onClick={() => loadData()}
                   className="text-xs font-semibold text-white bg-[#0b2046] px-4 py-2 rounded-none hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Recarregar Bifrost
@@ -614,6 +675,62 @@ export default function BifrostHome() {
                 <span>{copiedShareCurrentArticle ? 'Link Copiado!' : 'Compartilhar'}</span>
               </button>
             </div>
+
+            {/* Admin Actions Panel */}
+            {isAdmin && (
+              <div className="mt-8 p-4 bg-slate-50 border-t-2 border-[#ff5a00] flex flex-col sm:flex-row items-center justify-between gap-3 animate-fade-in">
+                <div className="text-left">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0b2046] font-sans">Controle do Guardião (Heimdall)</h4>
+                  <p className="text-[11px] text-slate-500 font-medium">Você tem permissões para gerenciar esta publicação.</p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto justify-end">
+                  {selectedArticle.approved === false && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/articles/approve', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: selectedArticle.id })
+                          });
+                          if (res.ok) {
+                            setSelectedArticle(prev => prev ? { ...prev, approved: true } : null);
+                            loadData();
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}
+                      className="flex items-center space-x-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer rounded-none"
+                    >
+                      <Check size={14} />
+                      <span>Aprovar</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={async () => {
+                      if (confirm('Tem certeza de que deseja eliminar esta publicação permanentemente da Bifrost?')) {
+                        try {
+                          const res = await fetch(`/api/articles?id=${selectedArticle.id}`, {
+                            method: 'DELETE'
+                          });
+                          if (res.ok) {
+                            setCurrentScreen('home');
+                            loadData();
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }
+                    }}
+                    className="flex items-center space-x-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer rounded-none"
+                  >
+                    <Trash2 size={14} />
+                    <span>Eliminar</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -756,16 +873,10 @@ export default function BifrostHome() {
                 <ArrowLeft size={16} />
                 <span>Voltar</span>
               </button>
-              <span className="text-[10px] font-mono text-[#ff5a00] uppercase tracking-widest font-bold">Identificação</span>
+              <span className="text-[10px] font-mono text-[#ff5a00] uppercase tracking-widest font-bold">Acesse a Bifrost</span>
             </div>
 
-            <div className="mb-6 text-center">
-              <div className="w-12 h-12 bg-[#ff5a00]/10 text-[#ff5a00] rounded-none flex items-center justify-center mx-auto mb-3">
-                <User size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-[#0b2046]">Acesse a Bifrost</h3>
-              <p className="text-xs text-[#0b2046] mt-1 font-bold">Conecte-se para publicar artigos e compartilhar conhecimento.</p>
-            </div>
+          
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               {loginError && (
@@ -776,26 +887,26 @@ export default function BifrostHome() {
               )}
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-mono">Nome de Usuário</label>
+                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-sans">Nome de Usuário</label>
                 <input 
                   type="text"
-                  placeholder="Ex: odin_allfather, thor-thunder..."
+                  placeholder="Nome de usuário"
                   value={loginUsername}
                   onChange={e => setLoginUsername(e.target.value)}
                   required
-                  className="w-full bg-slate-50 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:ring-1 focus:ring-[#ff5a00]/20 focus:outline-none transition-all placeholder-slate-400 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:bg-white focus:border-2 focus:border-[#ff5a00] focus:ring-0 focus:outline-none transition-all placeholder-slate-400 font-medium"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-mono">Senha</label>
+                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-sans">Senha</label>
                 <input 
                   type="password"
-                  placeholder="Sua senha rúnica"
+                  placeholder="Senha"
                   value={loginPassword}
                   onChange={e => setLoginPassword(e.target.value)}
                   required
-                  className="w-full bg-slate-50 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:ring-1 focus:ring-[#ff5a00]/20 focus:outline-none transition-all placeholder-slate-400 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:bg-white focus:border-2 focus:border-[#ff5a00] focus:ring-0 focus:outline-none transition-all placeholder-slate-400 font-medium"
                 />
               </div>
 
@@ -824,7 +935,7 @@ export default function BifrostHome() {
 
         {/* INLINE REGISTER SCREEN */}
         {currentScreen === 'register' && (
-          <div className="max-w-md mx-auto bg-white border-0 rounded-none shadow-xl p-6 md:p-10 animate-fade-in">
+          <div className="max-w-md mx-auto bg-white border border-slate-200 rounded-none shadow-xl p-6 md:p-10 animate-fade-in">
             {/* Integrated minimal Back button inside the A4 Sheet top bar */}
             <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
               <button 
@@ -837,14 +948,6 @@ export default function BifrostHome() {
               <span className="text-[10px] font-mono text-[#ff5a00] uppercase tracking-widest font-bold">Cadastro</span>
             </div>
 
-            <div className="mb-6 text-center">
-              <div className="w-12 h-12 bg-[#ff5a00]/10 text-[#ff5a00] rounded-none flex items-center justify-center mx-auto mb-3">
-                <UserPlus size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-[#0b2046]">Registro de Novo Membro</h3>
-              <p className="text-xs text-[#0b2046] mt-1 font-bold">Inscreva-se para contribuir com novos artigos e ensinamentos.</p>
-            </div>
-
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               {registerError && (
                 <div className="flex items-start space-x-2 p-3 bg-red-50 text-red-600 text-xs rounded-none">
@@ -854,38 +957,38 @@ export default function BifrostHome() {
               )}
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-mono">Nome de Usuário</label>
-                <input 
-                  type="text"
-                  placeholder="Ex: loki_trickster, freya-nordic..."
-                  value={registerUsername}
-                  onChange={e => setRegisterUsername(e.target.value)}
-                  required
-                  className="w-full bg-slate-50 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:ring-1 focus:ring-[#ff5a00]/20 focus:outline-none transition-all placeholder-slate-400 font-medium"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-mono">E-mail</label>
+                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-sans">E-mail</label>
                 <input 
                   type="email"
-                  placeholder="Ex: odin@asgard.com"
+                  placeholder="E-mail"
                   value={registerEmail}
                   onChange={e => setRegisterEmail(e.target.value)}
                   required
-                  className="w-full bg-slate-50 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:ring-1 focus:ring-[#ff5a00]/20 focus:outline-none transition-all placeholder-slate-400 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:bg-white focus:border-2 focus:border-[#ff5a00] focus:ring-0 focus:outline-none transition-all placeholder-slate-400 font-medium"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-mono">Senha</label>
+                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-sans">Senha</label>
                 <input 
                   type="password"
-                  placeholder="Defina sua senha de acesso"
+                  placeholder="Senha"
                   value={registerPassword}
                   onChange={e => setRegisterPassword(e.target.value)}
                   required
-                  className="w-full bg-slate-50 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:ring-1 focus:ring-[#ff5a00]/20 focus:outline-none transition-all placeholder-slate-400 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:bg-white focus:border-2 focus:border-[#ff5a00] focus:ring-0 focus:outline-none transition-all placeholder-slate-400 font-medium"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#0b2046] uppercase tracking-wider font-sans">Repetir Senha</label>
+                <input 
+                  type="password"
+                  placeholder="Repetir senha"
+                  value={registerConfirmPassword}
+                  onChange={e => setRegisterConfirmPassword(e.target.value)}
+                  required
+                  className="w-full bg-slate-50 border border-slate-300 rounded-none px-4 py-2.5 text-sm text-[#0b2046] focus:bg-white focus:border-2 focus:border-[#ff5a00] focus:ring-0 focus:outline-none transition-all placeholder-slate-400 font-medium"
                 />
               </div>
 

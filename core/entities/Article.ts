@@ -13,4 +13,5 @@ export interface Article {
   createdAt: string; // ISO string
   likes: number;
   tags: string[];
+  approved?: boolean;
 }

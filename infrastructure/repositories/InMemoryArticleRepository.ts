@@ -74,7 +74,8 @@ No ecossistema **Heimdall**, o Rust é nosso aliado preferido para serviços de 
     },
     createdAt: '2026-07-01T10:00:00.000Z',
     likes: 42,
-    tags: ['Rust', 'Systems Programming', 'Memory Safety']
+    tags: ['Rust', 'Systems Programming', 'Memory Safety'],
+    approved: true
   },
   {
     id: 'art-2',
@@ -143,7 +144,8 @@ Mantenha a maior parte de sua aplicação como Server Components. Empurre a inte
     },
     createdAt: '2026-07-02T14:30:00.000Z',
     likes: 35,
-    tags: ['Next.js', 'React', 'Performance', 'Web Dev']
+    tags: ['Next.js', 'React', 'Performance', 'Web Dev'],
+    approved: true
   },
   {
     id: 'art-3',
@@ -205,7 +207,8 @@ Complemente o hardening instalando o \`fail2ban\`. Ele monitora as tentativas de
     },
     createdAt: '2026-07-03T08:15:00.000Z',
     likes: 58,
-    tags: ['Security', 'SSH', 'Linux', 'DevOps']
+    tags: ['Security', 'SSH', 'Linux', 'DevOps'],
+    approved: true
   }
 ];
 
@@ -223,11 +226,13 @@ export class InMemoryArticleRepository implements IArticleRepository {
   }
 
   async create(articleInput: Omit<Article, 'id' | 'createdAt' | 'likes'>): Promise<Article> {
+    const isAdmin = articleInput.author.name === 'heindall';
     const newArticle: Article = {
       ...articleInput,
       id: `art-${Date.now()}`,
       createdAt: new Date().toISOString(),
-      likes: 0
+      likes: 0,
+      approved: isAdmin
     };
     articlesStore.push(newArticle);
     return newArticle;
@@ -241,5 +246,21 @@ export class InMemoryArticleRepository implements IArticleRepository {
       likes: articlesStore[index].likes + 1
     };
     return articlesStore[index];
+  }
+
+  async approve(id: string): Promise<Article | null> {
+    const index = articlesStore.findIndex(a => a.id === id);
+    if (index === -1) return null;
+    articlesStore[index] = {
+      ...articlesStore[index],
+      approved: true
+    };
+    return articlesStore[index];
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const initialLength = articlesStore.length;
+    articlesStore = articlesStore.filter(a => a.id !== id);
+    return articlesStore.length < initialLength;
   }
 }

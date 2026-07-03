@@ -101,23 +101,23 @@ export function CreateSnippetModal({ onClose, onSuccess }: CreateSnippetModalPro
           {/* Title and Language */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-mono">Título do Snippet</label>
+              <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-sans">Título do Snippet</label>
               <input 
                 type="text"
-                placeholder="Ex: Worker Pool concorrente em Go"
+                placeholder="Título do Snippet"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 required
-                className="w-full bg-[#0A0D14] border border-slate-800 rounded-none px-4 py-2.5 text-sm text-white focus:border-[#00D4FF] focus:outline-none transition-all"
+                className="w-full bg-[#0A0D14] border border-slate-700 rounded-none px-4 py-2.5 text-sm text-white focus:bg-[#0A0D14] focus:border-2 focus:border-[#00D4FF] focus:ring-0 focus:outline-none transition-all"
               />
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-mono">Linguagem</label>
+              <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-sans">Linguagem</label>
               <select
                 value={language}
                 onChange={e => setLanguage(e.target.value)}
-                className="w-full bg-[#0A0D14] border border-slate-800 rounded-none px-4 py-2.5 text-sm text-white focus:border-[#00D4FF] focus:outline-none transition-all capitalize"
+                className="w-full bg-[#0A0D14] border border-slate-700 rounded-none px-4 py-2.5 text-sm text-white focus:bg-[#0A0D14] focus:border-2 focus:border-[#00D4FF] focus:ring-0 focus:outline-none transition-all capitalize"
               >
                 <option value="typescript">TypeScript</option>
                 <option value="javascript">JavaScript</option>
@@ -132,21 +132,21 @@ export function CreateSnippetModal({ onClose, onSuccess }: CreateSnippetModalPro
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-mono">Descrição Curta</label>
+            <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-sans">Descrição Curta</label>
             <input 
               type="text"
               placeholder="Explique o que este código faz e em quais cenários utilizá-lo..."
               value={description}
               onChange={e => setDescription(e.target.value)}
               required
-              className="w-full bg-[#0A0D14] border border-slate-800 rounded-none px-4 py-2.5 text-sm text-white focus:border-[#00D4FF] focus:outline-none transition-all"
+              className="w-full bg-[#0A0D14] border border-slate-700 rounded-none px-4 py-2.5 text-sm text-white focus:bg-[#0A0D14] focus:border-2 focus:border-[#00D4FF] focus:ring-0 focus:outline-none transition-all"
             />
           </div>
 
           {/* Code Blocks */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-mono font-bold">Código Fonte</label>
+              <label className="text-xs font-semibold text-[#9BA1A8] uppercase tracking-wider font-sans font-bold">Código Fonte</label>
               <span className="text-[10px] text-[#00D4FF] font-mono uppercase tracking-widest flex items-center space-x-1">
                 <Code size={11} />
                 <span>Modo Escrita Ativo</span>
@@ -158,7 +158,7 @@ export function CreateSnippetModal({ onClose, onSuccess }: CreateSnippetModalPro
               value={code}
               onChange={e => setCode(e.target.value)}
               required
-              className="w-full bg-[#0A0D14] border border-slate-800 rounded-none px-4 py-3 text-sm text-white focus:border-[#00D4FF] focus:outline-none transition-all font-mono leading-relaxed resize-y"
+              className="w-full bg-[#0A0D14] border border-slate-700 rounded-none px-4 py-3 text-sm text-white focus:bg-[#0A0D14] focus:border-2 focus:border-[#00D4FF] focus:ring-0 focus:outline-none transition-all font-mono leading-relaxed resize-y"
             />
           </div>
 

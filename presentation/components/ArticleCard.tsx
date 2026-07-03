@@ -29,14 +29,21 @@ export function ArticleCard({ article, onSelect, onLike }: ArticleCardProps) {
   return (
     <article 
       onClick={() => onSelect(article)}
-      className="group relative flex flex-col justify-between bg-white rounded-none p-5 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full shadow-sm"
+      className={`group relative flex flex-col justify-between bg-white rounded-none p-5 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full shadow-sm ${article.approved === false ? 'border-l-4 border-amber-500' : ''}`}
     >
       <div>
         {/* Header Metadata */}
         <div className="flex items-center justify-between mb-4">
-          <span className={`text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-none uppercase tracking-widest ${badgeClass}`}>
-            {article.category}
-          </span>
+          <div className="flex items-center space-x-1.5">
+            <span className={`text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-none uppercase tracking-widest ${badgeClass}`}>
+              {article.category}
+            </span>
+            {article.approved === false && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-amber-500 text-white uppercase tracking-wider animate-pulse">
+                Pendente
+              </span>
+            )}
+          </div>
           <span className="flex items-center text-[11px] text-[#52667d] font-mono">
             <BookOpen size={12} className="mr-1 text-[#ff5a00]" />
             {article.readTime}
