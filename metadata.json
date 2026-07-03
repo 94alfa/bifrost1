@@ -1,0 +1,6 @@
+{
+  "name": "Bifrost",
+  "description": "Uma plataforma diária de compartilhamento de todo tipo de conhecimento com revisão e explicações inteligentes por inteligência artificial.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
