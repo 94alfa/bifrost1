@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { InMemorySnippetRepository } from '@/infrastructure/repositories/InMemorySnippetRepository';
+import { getSnippetRepository } from '@/infrastructure/repositories/RepositoryProvider';
 
-const snippetRepository = new InMemorySnippetRepository();
+const snippetRepository = getSnippetRepository();
 
 export async function POST(req: NextRequest) {
   try {

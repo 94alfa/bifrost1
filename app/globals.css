@@ -1,3 +1,56 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Esconder a barra de rolagem mantendo a funcionalidade de scroll (perfeito para mobile e swipe horizontal) */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-none {
+  -ms-overflow-style: none !important;  /* IE e Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE e Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+/* Customização geral de scrollbars para torná-las super finas, discretas e elegantes em desktops */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* slate-300 */
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* slate-400 */
+  }
+}
+
+/* Ocultar barra de rolagem em dispositivos móveis por padrão para evitar ruído estético */
+@media (max-width: 767px) {
+  ::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    background: transparent; /* Oculta em navegadores webkit de celulares */
+  }
+  
+  html, body {
+    overflow-x: hidden; /* Evita rolagem horizontal acidental da página inteira */
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+

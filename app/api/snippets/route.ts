@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { InMemorySnippetRepository } from '@/infrastructure/repositories/InMemorySnippetRepository';
+import { getSnippetRepository } from '@/infrastructure/repositories/RepositoryProvider';
 import { GetSnippetsUseCase } from '@/core/usecases/GetSnippets';
 import { CreateSnippetUseCase } from '@/core/usecases/CreateSnippet';
 
-const snippetRepository = new InMemorySnippetRepository();
+const snippetRepository = getSnippetRepository();
 
 export async function GET() {
   try {

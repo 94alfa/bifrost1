@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { InMemoryArticleRepository } from '@/infrastructure/repositories/InMemoryArticleRepository';
+import { getArticleRepository } from '@/infrastructure/repositories/RepositoryProvider';
 
-const articleRepository = new InMemoryArticleRepository();
+const articleRepository = getArticleRepository();
 
 export async function POST(req: NextRequest) {
   try {

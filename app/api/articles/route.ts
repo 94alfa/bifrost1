@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { InMemoryArticleRepository } from '@/infrastructure/repositories/InMemoryArticleRepository';
+import { getArticleRepository } from '@/infrastructure/repositories/RepositoryProvider';
 import { GetArticlesUseCase } from '@/core/usecases/GetArticles';
 import { CreateArticleUseCase } from '@/core/usecases/CreateArticle';
 
-// Use a single instance to share the in-memory store in Node dev server
-const articleRepository = new InMemoryArticleRepository();
+// Fetch the repository instance via the provider (adhering to SOLID principles)
+const articleRepository = getArticleRepository();
 
 export async function GET(req: NextRequest) {
   try {
